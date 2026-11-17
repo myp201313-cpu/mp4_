@@ -1,4 +1,3 @@
-// Map TMDB IDs to your hosted MP4 files
 const mediaDatabase = {
   'movie_550': 'https://googleapis.com',
   'tv_1399_1_1': 'https://googleapis.com'
@@ -9,32 +8,37 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Match Movie URL: /stream/movie/{tmdb_id}.mp4
+    let mp4Url = null;
+
     const movieMatch = path.match(/^\/stream\/movie\/(\d+)\.mp4$/);
     if (movieMatch) {
-      const [, tmdbId] = movieMatch;
-      const mp4Url = mediaDatabase[`movie_${tmdbId}`];
-
-      if (!mp4Url) {
-        return new Response('MP4 not found', { status: 404 });
-      }
-      return Response.redirect(mp4Url, 302);
+      mp4Url = mediaDatabase[`movie_${movieMatch}`];
     }
 
-    // Match TV URL: /stream/tv/{tmdb_id}/{season}/{episode}.mp4
     const tvMatch = path.match(/^\/stream\/tv\/(\d+)\/(\d+)\/(\d+)\.mp4$/);
     if (tvMatch) {
       const [, tmdbId, season, episode] = tvMatch;
-      const mp4Url = mediaDatabase[`tv_${tmdbId}_${season}_${episode}`];
-
-      if (!mp4Url) {
-        return new Response('Episode MP4 not found', { status: 404 });
-      }
-      return Response.redirect(mp4Url, 302);
+      mp4Url = mediaDatabase[`tv_${tmdbId}_${season}_${episode}`];
     }
 
-    return new Response('Stream server is active. Use /stream/movie/{id}.mp4 or /stream/tv/{id}/{season}/{episode}.mp4', {
-      status: 200
+    if (!mp4Url) {
+      return new Response('MP4 not found', {
+        status: 404,
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+
+    // Fetch and stream the video with CORS headers so web players don't block it
+    const videoResponse = await fetch(mp4Url, {
+      headers: request.headers
+    });
+
+    const newHeaders = new Headers(videoResponse.headers);
+    newHeaders.set('Access-Control-Allow-Origin', '*');
+
+    return new Response(videoResponse.body, {
+      status: videoResponse.status,
+      headers: newHeaders
     });
   }
 };
