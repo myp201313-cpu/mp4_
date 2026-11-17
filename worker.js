@@ -12,7 +12,7 @@ export default {
     // Match Movie URL: /stream/movie/{tmdb_id}.mp4
     const movieMatch = path.match(/^\/stream\/movie\/(\d+)\.mp4$/);
     if (movieMatch) {
-      const tmdbId = movieMatch[1];
+      const [, tmdbId] = movieMatch;
       const mp4Url = mediaDatabase[`movie_${tmdbId}`];
 
       if (!mp4Url) {
@@ -33,6 +33,8 @@ export default {
       return Response.redirect(mp4Url, 302);
     }
 
-    return new Response('Invalid stream URL format', { status: 400 });
+    return new Response('Stream server is active. Use /stream/movie/{id}.mp4 or /stream/tv/{id}/{season}/{episode}.mp4', {
+      status: 200
+    });
   }
 };
