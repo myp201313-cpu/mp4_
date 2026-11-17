@@ -3,7 +3,6 @@ const mediaDatabase = {
   'tv_1399_1_1': 'https://googleapis.com'
 };
 
-// Default test video if a TMDB ID is not listed above yet
 const defaultVideo = 'https://googleapis.com';
 
 export default {
@@ -11,28 +10,22 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    let mp4Url = null;
+    let mp4Url = defaultVideo;
 
-    const movieMatch = path.match(/^\/stream\/movie\/(\d+)\.mp4$/);
-    if (movieMatch) {
-      const [, tmdbId] = movieMatch;
-      mp4Url = mediaDatabase[`movie_${tmdbId}`] || defaultVideo;
-    }
-
-    const tvMatch = path.match(/^\/stream\/tv\/(\d+)\/(\d+)\/(\d+)\.mp4$/);
+    // Matches /stream/tv/1399/1/1.mp4 or /tv/1399/1/1
+    const tvMatch = path.match(/\/tv\/(\d+)\/(\d+)\/(\d+)/);
     if (tvMatch) {
       const [, tmdbId, season, episode] = tvMatch;
       mp4Url = mediaDatabase[`tv_${tmdbId}_${season}_${episode}`] || defaultVideo;
+    } else {
+      // Matches /stream/movie/550.mp4, /movie/550, or /550.mp4
+      const movieMatch = path.match(/\/(?:movie\/)?(\d+)/);
+      if (movieMatch) {
+        const [, tmdbId] = movieMatch;
+        mp4Url = mediaDatabase[`movie_${tmdbId}`] || defaultVideo;
+      }
     }
 
-    if (!mp4Url) {
-      return new Response('Invalid URL format', {
-        status: 400,
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      });
-    }
-
-    // Stream video with CORS headers for web players
     const videoResponse = await fetch(mp4Url, {
       headers: request.headers
     });
