@@ -12,7 +12,7 @@ export default {
     // Match Movie URL: /stream/movie/{tmdb_id}.mp4
     const movieMatch = path.match(/^\/stream\/movie\/(\d+)\.mp4$/);
     if (movieMatch) {
-      const tmdbId = movieMatch;
+      const tmdbId = movieMatch[1];
       const mp4Url = mediaDatabase[`movie_${tmdbId}`];
 
       if (!mp4Url) {
